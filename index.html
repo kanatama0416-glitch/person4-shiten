@@ -1,190 +1,29 @@
 <!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f4f4f1"><title>視展 — 04</title><style>html,body{margin:0;min-height:100%;max-width:100%;overflow-x:hidden;overscroll-behavior-x:none;background:#f4f4f1}body{visibility:hidden}</style></head><body><script>
 (async()=>{
-  const accent='#70dc8b',rgba42='rgba(112,220,139,.42)',rgba32='rgba(112,220,139,.32)',current=4,about='https://kanatama0416-glitch.github.io/about-shiten/';
-  const pages=[
-    'https://kanatama0416-glitch.github.io/person1-shiten/',
-    'https://kanatama0416-glitch.github.io/person2-shiten/',
-    'https://kanatama0416-glitch.github.io/person3-shiten/',
-    'https://kanatama0416-glitch.github.io/person4-shiten/',
-    'https://kanatama0416-glitch.github.io/person5-shiten/'
-  ];
-  try{
-    let html=await(await fetch('https://raw.githubusercontent.com/kanatama0416-glitch/person1-shiten/93246663e808f739feba769129b4593087c794cf/index.html',{cache:'no-store'})).text();
-
-    html=html.replace('<style>','<style>html,body{max-width:100%;overflow-x:hidden!important;overscroll-behavior-x:none}.about-shiten-link{position:relative;z-index:20;display:inline-flex;align-items:center;gap:9px;margin:14px 0 0 14px;padding:8px 11px 8px 9px;background:#111;color:#fff!important;text-decoration:none!important;border:2px solid #111;box-shadow:3px 3px 0 '+accent+';font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif}.about-shiten-link i{display:block;width:27px;height:16px;border:2px solid #fff;border-radius:50%;position:relative}.about-shiten-link i:after{content:"";position:absolute;width:7px;height:7px;border-radius:50%;background:'+accent+';left:8px;top:2.5px}.about-shiten-link strong{display:block;font-size:12px;line-height:1.05;letter-spacing:.02em}.about-shiten-link small{display:block;margin-top:3px;font:700 7px/1 Arial,sans-serif;letter-spacing:.14em;opacity:.72}.about-shiten-link:active{transform:translate(2px,2px);box-shadow:1px 1px 0 '+accent+'}');
-
-    const aboutLink='<a class="about-shiten-link" href="'+about+'" aria-label="視展についてへ戻る"><i aria-hidden="true"></i><span><strong>← 視展について</strong><small>ABOUT SHITEN</small></span></a>';
-    html=html.replace(/<body([^>]*)>/i,(m,attrs)=>'<body'+attrs+'>'+aboutLink);
-
-    html=html.replaceAll('#ff4f8755',accent+'55')
-      .replaceAll('#ff4f87',accent)
-      .replaceAll('rgba(255,79,135,.42)',rgba42)
-      .replaceAll('rgba(255,79,135,.32)',rgba32);
-
-    let navIndex=0;
-    html=html.replace(/<a class="v" href="[^"]*"(?: aria-current="page")?>/g,()=>{
-      const i=navIndex++,url=pages[i];
-      return `<a class="v" href="${url}" onclick="window.location.assign('${url}');return false;"${i===current-1?' aria-current="page"':''}>`;
-    });
-    if(navIndex!==5)throw new Error('navigation build failed');
-
-    html=html.replace(
-      /<button class="secret-toggle" id="secretToggle"[\s\S]*?<\/button>/,
-      '<button class="tear-toggle" id="tearToggle" type="button" aria-label="涙を落として植物を育てる"><span class="tear-icon" aria-hidden="true"></span></button>'
-    );
-
-    html=html.replace(
-      '<div class="section"><span>01</span><h2>視点について</h2></div>',
-      '<div class="growth-garden" id="growthGarden" data-stage="0" aria-live="polite" aria-label="涙で育つ植物"><div class="plant"><span class="stem"></span><span class="leaf leaf-a"></span><span class="leaf leaf-b"></span><span class="leaf leaf-c"></span><span class="leaf leaf-d"></span><span class="bud"></span><span class="flower"><span class="petal p1"></span><span class="petal p2"></span><span class="petal p3"></span><span class="petal p4"></span><span class="petal p5"></span><span class="petal p6"></span><span class="flower-eye"></span></span></div><span class="soil"></span><span class="growth-hint">涙をあげてみる</span></div><div class="section"><span>01</span><h2>視点について</h2></div>'
-    );
-
-    html=html.replace('</style>',`
-.v:nth-child(1){--eye-color:#ff4f87!important}.v:nth-child(2){--eye-color:#58c8ff!important}.v:nth-child(3){--eye-color:#ffd83d!important}.v:nth-child(4){--eye-color:#70dc8b!important}.v:nth-child(5){--eye-color:#9b7cff!important}
-.v:first-child b{color:#111!important}.v:nth-child(${current}) b{color:${accent}!important}.v:first-child:before{display:none!important}.v:nth-child(${current}):before{content:"NOW";position:absolute;z-index:6;top:-7px;right:-2px;background:#111;color:#fff;border-radius:99px;padding:1px 5px;font:900 7px Arial;letter-spacing:.08em;display:block!important}
-
-/* 04: 涙で植物が育つ */
-body.intro-lock .tear-toggle{visibility:hidden}.tear-toggle{position:fixed;right:15px;bottom:18px;z-index:140;width:58px;height:58px;padding:0;border:3px solid #111;border-radius:50%;background:#fff;box-shadow:4px 4px 0 #111;cursor:pointer;transform:rotate(-3deg);transition:transform .18s ease,box-shadow .18s ease}
-.tear-toggle:active{transform:translate(3px,3px) rotate(3deg) scale(.94);box-shadow:1px 1px 0 #111}
-.tear-toggle:focus-visible{outline:4px solid ${accent};outline-offset:4px}
-.tear-icon{position:absolute;width:24px;height:31px;left:15px;top:10px;background:${accent};border:3px solid #111;border-radius:58% 45% 60% 35%;transform:rotate(45deg)}
-.tear-icon:after{content:"";position:absolute;width:7px;height:10px;border-radius:50%;background:#fff;left:5px;top:5px;opacity:.9}
-.tear-toggle.pop .tear-icon{animation:tearButtonPop .5s cubic-bezier(.2,.9,.3,1.3)}
-@keyframes tearButtonPop{0%,100%{transform:rotate(45deg) scale(1)}45%{transform:rotate(45deg) scale(1.25,.82)}70%{transform:rotate(45deg) scale(.9,1.12)}}
-
-.growth-garden{height:145px;margin:-10px 0 26px;position:relative;overflow:visible;pointer-events:none}
-.growth-garden .soil{position:absolute;left:50%;bottom:12px;width:116px;height:24px;margin-left:-58px;background:#111;border-radius:50%;transform:scaleX(.82)}
-.growth-garden .soil:after{content:"";position:absolute;left:13px;right:13px;top:6px;height:5px;background:${accent};border-radius:50%;opacity:.68}
-.growth-hint{position:absolute;left:50%;bottom:-4px;transform:translateX(-50%);font:800 10px/1.2 -apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;letter-spacing:.08em;white-space:nowrap;opacity:.42;transition:opacity .25s ease}
-.growth-garden[data-stage]:not([data-stage="0"]) .growth-hint{opacity:0}
-
-.plant{position:absolute;left:50%;bottom:31px;width:110px;height:108px;margin-left:-55px}
-.stem{position:absolute;left:52px;bottom:0;width:6px;height:0;background:#111;border-radius:99px;transform-origin:bottom;transition:height .55s cubic-bezier(.2,.85,.25,1.15)}
-.leaf{position:absolute;width:30px;height:17px;background:${accent};border:3px solid #111;border-radius:85% 15% 80% 20%;opacity:0;transform:scale(.2) rotate(0deg);transition:opacity .28s ease,transform .48s cubic-bezier(.2,.9,.3,1.25)}
-.leaf-a{left:25px;bottom:24px;transform-origin:right center}
-.leaf-b{right:23px;bottom:39px;transform-origin:left center;rotate:180deg}
-.leaf-c{left:22px;bottom:56px;transform-origin:right center}
-.leaf-d{right:20px;bottom:70px;transform-origin:left center;rotate:180deg}
-
-.bud{position:absolute;left:43px;bottom:76px;width:24px;height:29px;background:${accent};border:3px solid #111;border-radius:55% 55% 45% 45%;opacity:0;transform:translateY(12px) scale(.2);transition:opacity .3s ease,transform .55s cubic-bezier(.2,.9,.3,1.3)}
-.flower{position:absolute;left:55px;bottom:82px;width:0;height:0;opacity:0;transform:scale(.18);transition:opacity .25s ease,transform .65s cubic-bezier(.2,.9,.3,1.25)}
-.petal{position:absolute;left:-13px;top:-31px;width:26px;height:36px;background:#fff;border:3px solid #111;border-radius:55% 55% 45% 45%;transform-origin:13px 31px}
-.p1{transform:rotate(0deg)}.p2{transform:rotate(60deg)}.p3{transform:rotate(120deg)}.p4{transform:rotate(180deg)}.p5{transform:rotate(240deg)}.p6{transform:rotate(300deg)}
-.flower-eye{position:absolute;left:-18px;top:-18px;width:36px;height:24px;background:#fff;border:3px solid #111;border-radius:50%;z-index:3}
-.flower-eye:before{content:"";position:absolute;left:8px;top:2px;width:14px;height:14px;border:2px solid #111;border-radius:50%;background:${accent}}
-.flower-eye:after{content:"";position:absolute;left:13px;top:7px;width:6px;height:6px;border-radius:50%;background:#111;box-shadow:2px -2px 0 -1px #fff}
-
-.growth-garden[data-stage="1"] .stem{height:30px}
-.growth-garden[data-stage="1"] .leaf-a,.growth-garden[data-stage="2"] .leaf-a,.growth-garden[data-stage="2"] .leaf-b,.growth-garden[data-stage="3"] .leaf,.growth-garden[data-stage="4"] .leaf,.growth-garden[data-stage="5"] .leaf{opacity:1}
-.growth-garden[data-stage="1"] .leaf-a{transform:scale(.8) rotate(-20deg)}
-.growth-garden[data-stage="2"] .stem{height:52px}
-.growth-garden[data-stage="2"] .leaf-a,.growth-garden[data-stage="3"] .leaf-a,.growth-garden[data-stage="4"] .leaf-a,.growth-garden[data-stage="5"] .leaf-a{transform:scale(1) rotate(-20deg)}
-.growth-garden[data-stage="2"] .leaf-b,.growth-garden[data-stage="3"] .leaf-b,.growth-garden[data-stage="4"] .leaf-b,.growth-garden[data-stage="5"] .leaf-b{transform:scale(1) rotate(18deg)}
-.growth-garden[data-stage="3"] .stem{height:78px}
-.growth-garden[data-stage="3"] .leaf-c,.growth-garden[data-stage="4"] .leaf-c,.growth-garden[data-stage="5"] .leaf-c{transform:scale(1) rotate(-12deg)}
-.growth-garden[data-stage="3"] .leaf-d,.growth-garden[data-stage="4"] .leaf-d,.growth-garden[data-stage="5"] .leaf-d{transform:scale(1) rotate(15deg)}
-.growth-garden[data-stage="4"] .stem,.growth-garden[data-stage="5"] .stem{height:88px}
-.growth-garden[data-stage="4"] .bud{opacity:1;transform:translateY(0) scale(1)}
-.growth-garden[data-stage="5"] .bud{opacity:0;transform:translateY(-5px) scale(.3)}
-.growth-garden[data-stage="5"] .flower{opacity:1;transform:scale(1)}
-.growth-garden.bloom .flower{animation:flowerHello .72s cubic-bezier(.2,.9,.3,1.25)}
-@keyframes flowerHello{0%{transform:scale(.35) rotate(-14deg)}55%{transform:scale(1.18) rotate(7deg)}78%{transform:scale(.94) rotate(-3deg)}100%{transform:scale(1) rotate(0)}}
-
-.falling-tear{position:absolute;z-index:9998;width:24px;height:30px;background:${accent};border:3px solid #111;border-radius:58% 45% 60% 35%;transform:rotate(45deg);pointer-events:none}
-.falling-tear:after{content:"";position:absolute;width:6px;height:9px;border-radius:50%;background:#fff;left:5px;top:5px;opacity:.88}
-.tear-splash{position:absolute;z-index:9997;width:70px;height:18px;border:4px solid ${accent};border-radius:50%;pointer-events:none;opacity:0}
-@keyframes splashRing{0%{opacity:.8;transform:scale(.2)}100%{opacity:0;transform:scale(1.35,.72)}}
-
-@media(max-width:380px){.growth-garden{height:134px}.tear-toggle{right:12px;bottom:14px;width:54px;height:54px}.tear-icon{left:13px;top:8px}}
-@media(prefers-reduced-motion:reduce){.falling-tear,.tear-splash{display:none}.stem,.leaf,.bud,.flower{transition:none!important}}
+const accent='#70dc8b',current=4,about='https://kanatama0416-glitch.github.io/about-shiten/';
+const pages=['https://kanatama0416-glitch.github.io/person1-shiten/','https://kanatama0416-glitch.github.io/person2-shiten/','https://kanatama0416-glitch.github.io/person3-shiten/','https://kanatama0416-glitch.github.io/person4-shiten/','https://kanatama0416-glitch.github.io/person5-shiten/'];
+try{
+let html=await(await fetch('https://raw.githubusercontent.com/kanatama0416-glitch/person1-shiten/93246663e808f739feba769129b4593087c794cf/index.html',{cache:'no-store'})).text();
+html=html.replace('<style>','<style>html,body{max-width:100%;overflow-x:hidden!important;overscroll-behavior-x:none}.about-shiten-link{position:relative;z-index:20;display:inline-flex;align-items:center;gap:9px;margin:14px 0 0 14px;padding:8px 11px 8px 9px;background:#111;color:#fff!important;text-decoration:none!important;border:2px solid #111;box-shadow:3px 3px 0 '+accent+';font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif}.about-shiten-link i{display:block;width:27px;height:16px;border:2px solid #fff;border-radius:50%;position:relative}.about-shiten-link i:after{content:"";position:absolute;width:7px;height:7px;border-radius:50%;background:'+accent+';left:8px;top:2.5px}.about-shiten-link strong{display:block;font-size:12px;line-height:1.05}.about-shiten-link small{display:block;margin-top:3px;font:700 7px/1 Arial;letter-spacing:.14em;opacity:.72}');
+const aboutLink='<a class="about-shiten-link" href="'+about+'"><i></i><span><strong>← 視展について</strong><small>ABOUT SHITEN</small></span></a>';
+html=html.replace(/<body([^>]*)>/i,(m,a)=>'<body'+a+'>'+aboutLink);
+html=html.replaceAll('#ff4f8755',accent+'55').replaceAll('#ff4f87',accent).replaceAll('rgba(255,79,135,.42)','rgba(112,220,139,.42)').replaceAll('rgba(255,79,135,.32)','rgba(112,220,139,.32)');
+let navIndex=0;html=html.replace(/<a class="v" href="[^"]*"(?: aria-current="page")?>/g,()=>{const i=navIndex++,u=pages[i];return `<a class="v" href="${u}" onclick="window.location.assign('${u}');return false;"${i===current-1?' aria-current="page"':''}>`});
+html=html.replace(/<button class="secret-toggle" id="secretToggle"[\s\S]*?<\/button>/,'<button class="tear-toggle" id="tearToggle" type="button" aria-label="涙を落として植物を育てる"><span class="tear-icon"></span></button>');
+const garden='<div class="page-garden" id="pageGarden" data-stage="0" aria-live="polite"><span class="pool"></span><span class="hint">涙をあげると、ページに広がる</span><span class="vine left"></span><span class="vine right"></span><span class="branch bl1"></span><span class="branch bl2"></span><span class="branch bl3"></span><span class="branch br1"></span><span class="branch br2"></span><span class="branch br3"></span><span class="leaves ll1"></span><span class="leaves ll2"></span><span class="leaves ll3"></span><span class="leaves ll4"></span><span class="leaves lr1"></span><span class="leaves lr2"></span><span class="leaves lr3"></span><span class="leaves lr4"></span><span class="eye-flower ef1"></span><span class="eye-flower ef2"></span><span class="eye-flower ef3"></span><span class="eye-flower ef4"></span><span class="eye-flower ef5"></span><span class="eye-flower ef6"></span></div>';
+html=html.replace('<main class="page">','<main class="page">'+garden);
+html=html.replace('</style>',`
+.v:nth-child(1){--eye-color:#ff4f87!important}.v:nth-child(2){--eye-color:#58c8ff!important}.v:nth-child(3){--eye-color:#ffd83d!important}.v:nth-child(4){--eye-color:#70dc8b!important}.v:nth-child(5){--eye-color:#9b7cff!important}.v:first-child b{color:#111!important}.v:nth-child(4) b{color:${accent}!important}.v:first-child:before{display:none!important}.v:nth-child(4):before{content:"NOW";position:absolute;z-index:6;top:-7px;right:-2px;background:#111;color:#fff;border-radius:99px;padding:1px 5px;font:900 7px Arial;letter-spacing:.08em;display:block!important}
+main.page{position:relative;isolation:isolate}.page>*:not(.page-garden){position:relative;z-index:2}.page-garden{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}.tear-toggle{position:fixed;right:15px;bottom:18px;z-index:140;width:58px;height:58px;padding:0;border:3px solid #111;border-radius:50%;background:#fff;box-shadow:4px 4px 0 #111;cursor:pointer;transform:rotate(-3deg)}body.intro-lock .tear-toggle{visibility:hidden}.tear-toggle:active{transform:translate(3px,3px) rotate(3deg) scale(.94);box-shadow:1px 1px 0 #111}.tear-icon{position:absolute;width:24px;height:31px;left:15px;top:10px;background:${accent};border:3px solid #111;border-radius:58% 45% 60% 35%;transform:rotate(45deg)}.tear-icon:after{content:"";position:absolute;width:7px;height:10px;border-radius:50%;background:#fff;left:5px;top:5px}.tear-toggle.pop .tear-icon{animation:tearPop .5s cubic-bezier(.2,.9,.3,1.3)}@keyframes tearPop{50%{transform:rotate(45deg) scale(1.28,.8)}}
+.pool{position:absolute;left:50%;top:118px;width:120px;height:20px;margin-left:-60px;border:3px solid #111;border-radius:50%;background:rgba(112,220,139,.25);opacity:0;transform:scale(.2);transition:.5s}.hint{position:absolute;left:50%;top:148px;transform:translateX(-50%);white-space:nowrap;background:#f4f4f1;padding:1px 6px;font:800 10px/1.2 -apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;letter-spacing:.06em;opacity:.42;transition:.3s}.page-garden[data-stage]:not([data-stage="0"]) .hint{opacity:0}.page-garden[data-stage]:not([data-stage="0"]) .pool{opacity:1;transform:scale(1)}
+.vine{position:absolute;top:155px;width:6px;height:0;background:#111;border-radius:99px;transition:height .85s cubic-bezier(.2,.85,.25,1.05)}.vine.left{left:8px}.vine.right{right:8px}.branch{position:absolute;height:5px;width:0;background:#111;border-radius:99px;transition:width .6s cubic-bezier(.2,.85,.25,1.05)}.bl1{left:10px;top:27%;transform:rotate(-28deg);transform-origin:left}.bl2{left:10px;top:50%;transform:rotate(26deg);transform-origin:left}.bl3{left:10px;top:73%;transform:rotate(-24deg);transform-origin:left}.br1{right:10px;top:31%;transform:rotate(28deg);transform-origin:right}.br2{right:10px;top:54%;transform:rotate(-26deg);transform-origin:right}.br3{right:10px;top:77%;transform:rotate(24deg);transform-origin:right}
+.leaves{position:absolute;width:68px;height:42px;opacity:0;transform:scale(.15);transition:opacity .35s,transform .55s cubic-bezier(.2,.9,.3,1.25)}.leaves:before,.leaves:after{content:"";position:absolute;width:31px;height:17px;background:${accent};border:3px solid #111;border-radius:85% 15% 80% 20%}.leaves:before{left:0;top:15px;transform:rotate(-25deg)}.leaves:after{right:2px;top:4px;transform:rotate(18deg)}.ll1{left:22px;top:23%}.ll2{left:28px;top:43%}.ll3{left:17px;top:63%}.ll4{left:38px;top:82%}.lr1{right:22px;top:27%}.lr2{right:28px;top:47%}.lr3{right:17px;top:67%}.lr4{right:38px;top:86%}.lr1:before,.lr2:before,.lr3:before,.lr4:before{left:35px;transform:rotate(205deg)}.lr1:after,.lr2:after,.lr3:after,.lr4:after{right:35px;transform:rotate(162deg)}
+.eye-flower{position:absolute;width:58px;height:58px;opacity:0;transform:scale(.15) rotate(-10deg);transition:opacity .35s,transform .65s cubic-bezier(.2,.9,.3,1.25);background:radial-gradient(circle at 50% 3px,#fff 0 11px,transparent 12px),radial-gradient(circle at calc(100% - 8px) 16px,#fff 0 11px,transparent 12px),radial-gradient(circle at calc(100% - 9px) calc(100% - 15px),#fff 0 11px,transparent 12px),radial-gradient(circle at 9px calc(100% - 15px),#fff 0 11px,transparent 12px),radial-gradient(circle at 8px 16px,#fff 0 11px,transparent 12px)}.eye-flower:after{content:"";position:absolute;left:11px;top:18px;width:36px;height:24px;border:3px solid #111;border-radius:50%;background:radial-gradient(circle at 17px 11px,#111 0 4px,${accent} 4.5px 9px,#fff 9.5px)}.ef1{left:15px;top:18%}.ef2{right:12px;top:37%}.ef3{left:25px;top:56%}.ef4{right:24px;top:65%}.ef5{left:12px;top:78%}.ef6{right:20px;top:88%}.page-garden.bloom .eye-flower{animation:flowerPop .8s cubic-bezier(.2,.9,.3,1.25)}@keyframes flowerPop{0%{transform:scale(.25) rotate(-15deg)}55%{transform:scale(1.2) rotate(6deg)}100%{transform:scale(1)}}
+.page-garden[data-stage="1"] .vine{height:16%}.page-garden[data-stage="2"] .vine{height:38%}.page-garden[data-stage="2"] .bl1,.page-garden[data-stage="2"] .br1{width:65px}.page-garden[data-stage="2"] .ll1,.page-garden[data-stage="2"] .lr1{opacity:1;transform:scale(1)}.page-garden[data-stage="3"] .vine{height:62%}.page-garden[data-stage="3"] .branch:nth-of-type(n){width:72px}.page-garden[data-stage="3"] .ll1,.page-garden[data-stage="3"] .lr1,.page-garden[data-stage="3"] .ll2,.page-garden[data-stage="3"] .lr2{opacity:1;transform:scale(1)}.page-garden[data-stage="4"] .vine,.page-garden[data-stage="5"] .vine{height:calc(100% - 210px)}.page-garden[data-stage="4"] .branch,.page-garden[data-stage="5"] .branch{width:78px}.page-garden[data-stage="4"] .leaves,.page-garden[data-stage="5"] .leaves{opacity:1;transform:scale(1)}.page-garden[data-stage="5"] .eye-flower{opacity:1;transform:scale(1)}
+.falling-tear{position:absolute;z-index:9998;width:24px;height:30px;background:${accent};border:3px solid #111;border-radius:58% 45% 60% 35%;transform:rotate(45deg);pointer-events:none}.falling-tear:after{content:"";position:absolute;width:6px;height:9px;border-radius:50%;background:#fff;left:5px;top:5px}.tear-splash{position:absolute;z-index:9997;width:78px;height:20px;border:4px solid ${accent};border-radius:50%;pointer-events:none;opacity:0}@keyframes splashRing{0%{opacity:.8;transform:scale(.2)}100%{opacity:0;transform:scale(1.4,.7)}}@media(max-width:380px){.tear-toggle{right:12px;bottom:14px;width:54px;height:54px}.tear-icon{left:13px;top:8px}.vine.left{left:3px}.vine.right{right:3px}}
 </style>`);
-
-    html=html.replace(
-      '</body>',
-      `<script>
-      (()=>{ 
-        const button=document.getElementById('tearToggle');
-        const garden=document.getElementById('growthGarden');
-        const eye=document.querySelector('.hero .eye');
-        if(!button||!garden)return;
-        let stage=0;
-        let busy=false;
-        const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-        function grow(){
-          stage=Math.min(5,stage+1);
-          garden.dataset.stage=String(stage);
-          garden.setAttribute('aria-label',stage<5?'涙で育つ植物。成長段階 '+stage+' / 5':'涙で育った、目玉の花');
-          if(stage===5){
-            garden.classList.remove('bloom');
-            void garden.offsetWidth;
-            garden.classList.add('bloom');
-          }
-        }
-
-        function splashAt(x,y){
-          const s=document.createElement('span');
-          s.className='tear-splash';
-          s.style.left=(x-35+window.scrollX)+'px';
-          s.style.top=(y-9+window.scrollY)+'px';
-          document.body.appendChild(s);
-          s.style.animation='splashRing .55s ease-out forwards';
-          setTimeout(()=>s.remove(),620);
-        }
-
-        function dropTear(){
-          if(reduced||!eye){grow();return}
-          const start=eye.getBoundingClientRect();
-          const soil=garden.querySelector('.soil').getBoundingClientRect();
-          const sx=start.left+start.width*.5-12;
-          const sy=start.bottom-8;
-          const tx=soil.left+soil.width*.5-12;
-          const ty=soil.top-18;
-          const tear=document.createElement('span');
-          tear.className='falling-tear';
-          tear.style.left=(sx+window.scrollX)+'px';
-          tear.style.top=(sy+window.scrollY)+'px';
-          document.body.appendChild(tear);
-          const dx=tx-sx,dy=ty-sy;
-          const anim=tear.animate([
-            {transform:'translate(0,0) rotate(45deg) scale(.72)',opacity:0},
-            {transform:'translate(0,8px) rotate(45deg) scale(1)',opacity:1,offset:.12},
-            {transform:'translate('+dx+'px,'+dy+'px) rotate(45deg) scale(1.05)',opacity:1,offset:.82},
-            {transform:'translate('+dx+'px,'+(dy+8)+'px) rotate(45deg) scale(1.35,.45)',opacity:0}
-          ],{duration:820,easing:'cubic-bezier(.25,.72,.3,1)',fill:'forwards'});
-          anim.finished.then(()=>{
-            tear.remove();
-            splashAt(soil.left+soil.width*.5,soil.top+6);
-            grow();
-            busy=false;
-          }).catch(()=>{tear.remove();grow();busy=false});
-        }
-
-        button.addEventListener('click',()=>{
-          button.classList.remove('pop');
-          void button.offsetWidth;
-          button.classList.add('pop');
-          if(busy)return;
-          busy=true;
-          if(stage>=5){
-            garden.classList.remove('bloom');
-            void garden.offsetWidth;
-            garden.classList.add('bloom');
-            busy=false;
-            return;
-          }
-          dropTear();
-          if(reduced)busy=false;
-        });
-      })();
-      <\/script></body>`
-    );
-
-    document.open();
-    document.write(html);
-    document.close();
-  }catch(e){
-    document.body.style.visibility='visible';
-    document.body.innerHTML='<div style="min-height:100vh;display:grid;place-items:center;font-family:system-ui">ページを読み込めませんでした。</div>';
-  }
+html=html.replace('</body>',`<script>(()=>{const b=document.getElementById('tearToggle'),g=document.getElementById('pageGarden'),eye=document.querySelector('.hero .eye');if(!b||!g)return;let stage=0,busy=false;const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;function grow(){stage=Math.min(5,stage+1);g.dataset.stage=stage;if(stage===5){g.classList.remove('bloom');void g.offsetWidth;g.classList.add('bloom')}}function splash(x,y){const s=document.createElement('span');s.className='tear-splash';s.style.left=(x-39+scrollX)+'px';s.style.top=(y-10+scrollY)+'px';document.body.appendChild(s);s.style.animation='splashRing .55s ease-out forwards';setTimeout(()=>s.remove(),600)}function drop(){if(reduced||!eye){grow();busy=false;return}const a=eye.getBoundingClientRect(),p=g.querySelector('.pool').getBoundingClientRect(),sx=a.left+a.width/2-12,sy=a.bottom-8,tx=p.left+p.width/2-12,ty=p.top-16,t=document.createElement('span');t.className='falling-tear';t.style.left=(sx+scrollX)+'px';t.style.top=(sy+scrollY)+'px';document.body.appendChild(t);const dx=tx-sx,dy=ty-sy;t.animate([{transform:'translate(0,0) rotate(45deg) scale(.7)',opacity:0},{transform:'translate(0,8px) rotate(45deg)',opacity:1,offset:.12},{transform:'translate('+dx+'px,'+dy+'px) rotate(45deg)',opacity:1,offset:.82},{transform:'translate('+dx+'px,'+(dy+8)+'px) rotate(45deg) scale(1.3,.45)',opacity:0}],{duration:820,easing:'cubic-bezier(.25,.72,.3,1)',fill:'forwards'}).finished.then(()=>{t.remove();splash(p.left+p.width/2,p.top+8);grow();busy=false}).catch(()=>{t.remove();grow();busy=false})}b.addEventListener('click',()=>{b.classList.remove('pop');void b.offsetWidth;b.classList.add('pop');if(busy)return;if(stage>=5){g.classList.remove('bloom');void g.offsetWidth;g.classList.add('bloom');return}busy=true;drop()})})();<\/script></body>`);
+document.open();document.write(html);document.close();
+}catch(e){document.body.style.visibility='visible';document.body.innerHTML='<div style="min-height:100vh;display:grid;place-items:center;font-family:system-ui">ページを読み込めませんでした。</div>'}
 })();
 </script></body></html>
