@@ -22,6 +22,17 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           enablement: true
+      - name: Inject leaf fix
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          head, sep, tail = s.rpartition('</body>')
+          if not sep:
+              raise SystemExit('closing body not found')
+          p.write_text(head + '<script src="./leaf-fix-v3.js"></script></body>' + tail, encoding='utf-8')
+          PY
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
