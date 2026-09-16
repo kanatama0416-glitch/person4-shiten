@@ -21,42 +21,43 @@ jobs:
       - name: Flatten 04 runtime page once
         run: |
           if grep -q "fetch('./core.html'" index.html; then
-            curl -fsSL https://kanatama0416-glitch.github.io/person1-shiten/base.html -o base-build.html
-            node <<'NODE'
-            const fs=require('fs');
-            const shell=fs.readFileSync('index.html','utf8');
-            const core=fs.readFileSync('core.html','utf8');
-            const base=fs.readFileSync('base-build.html','utf8');
-            function scriptFrom(html){
-              const m=html.match(/<script>([\s\S]*?)<\/script>/i);
-              if(!m) throw new Error('script block not found');
-              return m[1];
-            }
-            let writes=[];
-            global.document={body:{style:{},innerHTML:''},open(){},write(v){writes.push(String(v));},close(){}};
-            global.fetch=async (url)=>({ok:true,status:200,text:async()=>String(url).includes('core.html')?core:base});
-            (async()=>{
-              await eval(scriptFrom(shell));
-              if(!writes.length) throw new Error('shell produced no core html');
-              const prepared=writes.pop();
-              writes=[];
-              await eval(scriptFrom(prepared));
-              if(!writes.length) throw new Error('core produced no final html');
-              let html=writes.pop();
-              if(!/^<!doctype/i.test(html.trim())) html='<!doctype html>\n'+html;
-              if(html.includes('p4Preboot')) throw new Error('custom preboot leaked');
-              if(html.includes("fetch('./core.html'")) throw new Error('runtime core fetch leaked');
-              if(!html.includes('id="intro"')) throw new Error('standard intro missing');
-              if(!html.includes('id="p4Garden"')) throw new Error('garden missing');
-              fs.writeFileSync('index.html',html);
-            })().catch(e=>{console.error(e);process.exit(1)});
-            NODE
-            rm -f base-build.html
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add index.html
-            git commit -m "Flatten 04 into static HTML"
-            git push
+          curl -fsSL https://kanatama0416-glitch.github.io/person1-shiten/base.html -o base-build.html
+          cat > /tmp/build-p4.js <<'NODE'
+          const fs=require('fs');
+          const shell=fs.readFileSync('index.html','utf8');
+          const core=fs.readFileSync('core.html','utf8');
+          const base=fs.readFileSync('base-build.html','utf8');
+          function scriptFrom(html){
+            const m=html.match(/<script>([\s\S]*?)<\/script>/i);
+            if(!m) throw new Error('script block not found');
+            return m[1];
+          }
+          let writes=[];
+          global.document={body:{style:{},innerHTML:''},open(){},write(v){writes.push(String(v));},close(){}};
+          global.fetch=async (url)=>({ok:true,status:200,text:async()=>String(url).includes('core.html')?core:base});
+          (async()=>{
+            await eval(scriptFrom(shell));
+            if(!writes.length) throw new Error('shell produced no core html');
+            const prepared=writes.pop();
+            writes=[];
+            await eval(scriptFrom(prepared));
+            if(!writes.length) throw new Error('core produced no final html');
+            let html=writes.pop();
+            if(!/^<!doctype/i.test(html.trim())) html='<!doctype html>\n'+html;
+            if(html.includes('p4Preboot')) throw new Error('custom preboot leaked');
+            if(html.includes("fetch('./core.html'")) throw new Error('runtime core fetch leaked');
+            if(!html.includes('id="intro"')) throw new Error('standard intro missing');
+            if(!html.includes('id="p4Garden"')) throw new Error('garden missing');
+            fs.writeFileSync('index.html',html);
+          })().catch(e=>{console.error(e);process.exit(1)});
+          NODE
+          node /tmp/build-p4.js
+          rm -f base-build.html
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Flatten 04 into static HTML"
+          git push
           fi
           ! grep -q "fetch('./core.html'" index.html
           ! grep -q 'p4Preboot' index.html
