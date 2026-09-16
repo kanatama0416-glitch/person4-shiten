@@ -18,59 +18,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build static 04 page
-        run: |
-          curl -fsSL https://kanatama0416-glitch.github.io/person1-shiten/base.html -o base-build.html
-          node <<'NODE'
-          const fs=require('fs');
-          const shell=fs.readFileSync('index.html','utf8');
-          const core=fs.readFileSync('core.html','utf8');
-          const base=fs.readFileSync('base-build.html','utf8');
-
-          function scriptFrom(html){
-            const m=html.match(/<script>([\s\S]*?)<\/script>/i);
-            if(!m) throw new Error('script block not found');
-            return m[1];
-          }
-          let writes=[];
-          global.document={
-            body:{style:{},innerHTML:''},
-            open(){},
-            write(v){writes.push(String(v));},
-            close(){}
-          };
-          global.fetch=async (url)=>({
-            ok:true,
-            status:200,
-            text:async()=>String(url).includes('core.html')?core:base
-          });
-
-          (async()=>{
-            // Pass 1: run the lightweight 04 shell transformation at build time.
-            await eval(scriptFrom(shell));
-            if(!writes.length) throw new Error('shell produced no core html');
-            const preparedCore=writes.pop();
-
-            // Pass 2: run the core template transformation at build time.
-            writes=[];
-            await eval(scriptFrom(preparedCore));
-            if(!writes.length) throw new Error('core produced no final html');
-            let finalHtml=writes.pop();
-            if(!/^<!doctype/i.test(finalHtml.trim())) finalHtml='<!doctype html>\n'+finalHtml;
-
-            if(finalHtml.includes('p4Preboot')) throw new Error('custom 04 preboot leaked into final html');
-            if(finalHtml.includes("fetch('./core.html'")) throw new Error('runtime core fetch leaked into final html');
-            if(!finalHtml.includes('<main class="page">')) throw new Error('final page missing');
-            if(!finalHtml.includes('id="intro"')) throw new Error('standard intro missing');
-            if(!finalHtml.includes('id="p4Garden"')) throw new Error('04 garden missing');
-            fs.writeFileSync('rendered-index.html',finalHtml);
-          })().catch(e=>{console.error(e);process.exit(1)});
-          NODE
-          mkdir -p _site
-          rsync -a --exclude '.git' --exclude '.github' --exclude '_site' --exclude 'base-build.html' --exclude 'rendered-index.html' ./ _site/
-          cp rendered-index.html _site/index.html
-          ! grep -q "fetch('./core.html'" _site/index.html
-          ! grep -q 'p4Preboot' _site/index.html
       - name: Setup Pages
         uses: actions/configure-pages@v5
         with:
@@ -78,7 +25,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './_site'
+          path: '.'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
