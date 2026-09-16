@@ -65,12 +65,14 @@ function paint(t){
  for(const d of decorations){const progress=clamp((t-d.when-(d.flower?180:0))/360);d.el.style.opacity=String(progress)}
  g.dataset.stage=t<450?'ground':t<1430?'seed':t<2040?'sprout':t<segments[2].start?'upward':t<segments[3].start?'bend':t<segments[5].start?'fork':t<geometry.end?'downward':'complete';
 }
-function animate(now){paint(reduced.matches?geometry.end:now-started);if(!reduced.matches&&now-started<geometry.end)frame=requestAnimationFrame(animate);else{b.setAttribute('aria-label','植物を消す');g.dataset.stage='complete'}}
+function animate(now){if(!used||!geometry)return;paint(reduced.matches?geometry.end:now-started);if(!reduced.matches&&now-started<geometry.end)frame=requestAnimationFrame(animate);else{b.setAttribute('aria-label','植物を消す');g.dataset.stage='complete'}}
 // One owner for start, cancel, and resize: no disabled-button override.
 b.setAttribute('aria-pressed','false');
 g.dataset.stage='idle';
 b.addEventListener('click',()=>{
- window.scrollTo(0,0);
+ // Both body and document can scroll with the existing overflow-x styling.
+ window.scrollTo({top:0,left:0,behavior:'instant'});
+ document.documentElement.scrollTop=0;document.body.scrollTop=0;
  if(used){
   used=false;cancelAnimationFrame(frame);cancelAnimationFrame(resizeFrame);
   g.style.display='none';g.dataset.stage='idle';svg.replaceChildren();
@@ -78,9 +80,15 @@ b.addEventListener('click',()=>{
   b.setAttribute('aria-pressed','false');b.setAttribute('aria-label','タネを落として植物を育てる');
   return;
  }
- g.style.display='';build();used=true;started=performance.now();
+ // Reset every run, then measure only after the hidden SVG has been restored.
+ cancelAnimationFrame(frame);cancelAnimationFrame(resizeFrame);
+ geometry=null;segments=[];decorations=[];svg.replaceChildren();
+ used=true;started=performance.now();g.style.display='';g.dataset.stage='starting';
  b.setAttribute('aria-pressed','true');b.setAttribute('aria-label','植物を消す');
- frame=requestAnimationFrame(animate);
+ frame=requestAnimationFrame(()=>{
+  if(!used)return;
+  started=performance.now();build();frame=requestAnimationFrame(animate);
+ });
 });
 let resizeFrame=0;
 function rebuild(){

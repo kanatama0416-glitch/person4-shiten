@@ -292,10 +292,11 @@ html.shiten-tease-v2-03 #tearToggle.shiten-v2-cat-eye::after{
   animation:shitenV2CatPupil 1.85s ease both!important;
 }
 
-.shiten-v2-eye-sprout{position:fixed;z-index:2147483002;width:3px;height:24px;background:#111;border-radius:3px;pointer-events:none;transform-origin:50% 100%;animation:shitenV2SproutStem 1.9s ease both}
-.shiten-v2-eye-sprout::before,.shiten-v2-eye-sprout::after{content:"";position:absolute;top:-3px;width:13px;height:8px;background:#70dc8b;border:2px solid #111;opacity:0}
-.shiten-v2-eye-sprout::before{right:1px;border-radius:80% 25% 80% 25%;transform-origin:100% 100%;animation:shitenV2LeafLeft 1.9s ease both}
-.shiten-v2-eye-sprout::after{left:1px;border-radius:25% 80% 25% 80%;transform-origin:0 100%;animation:shitenV2LeafRight 1.9s ease both}
+.shiten-v2-eye-sprout{position:fixed;z-index:2147483002;width:42px;height:36px;pointer-events:none;transform-origin:50% 100%;animation:shitenV2SproutStem 1.9s ease both}
+.shiten-v2-eye-sprout svg{display:block;width:42px;height:36px;overflow:visible}
+.shiten-v2-eye-sprout .sprout-stem{fill:none;stroke:#111;stroke-width:2.5;stroke-linecap:round}
+.shiten-v2-eye-sprout .sprout-leaf{fill:#70dc8b;stroke:#111;stroke-width:2;stroke-linejoin:round;transform-origin:21px 13px;animation:shitenV2SproutLeaves 1.9s ease both}
+@keyframes shitenV2SproutLeaves{0%,20%{transform:scale(.05);opacity:0}42%,100%{transform:scale(1);opacity:1}}
 
 html.shiten-tease-v2-05 #secretToggle.shiten-v2-color-spin .secret-iris,
 html.shiten-tease-v2-05 #tearToggle.shiten-v2-color-spin .tear-iris,
@@ -338,12 +339,20 @@ html.shiten-tease-v2-05 #tearToggle.shiten-v2-color-spin{animation:shitenV2EyeCo
 
     function tease04(){
       if(active)return;active=true;
-      var rect=eye.getBoundingClientRect();
       var sprout=document.createElement('div');
       sprout.className='shiten-v2-eye-sprout';
-      sprout.style.left=(rect.left+rect.width/2-1.5)+'px';
-      sprout.style.top=(rect.top+rect.height/2-24)+'px';
+      sprout.setAttribute('aria-hidden','true');
+      sprout.innerHTML='<svg viewBox="0 0 42 36" xmlns="http://www.w3.org/2000/svg"><path class="sprout-stem" d="M21 35 Q19 24 21 13"/><path class="sprout-leaf" d="M21 13 C16 2 3 2 4 8 C5 15 14 17 21 13Z"/><path class="sprout-leaf" d="M21 13 C26 2 39 2 38 8 C37 15 28 17 21 13Z"/></svg>';
       add(sprout);
+      // Follow the eye during its own movement and viewport changes.
+      function followEye(){
+        if(!sprout.isConnected)return;
+        var rect=eye.getBoundingClientRect();
+        sprout.style.left=(rect.left+rect.width/2-21)+'px';
+        sprout.style.top=(rect.top+rect.height/2-36)+'px';
+        requestAnimationFrame(followEye);
+      }
+      followEye();
       later(function(){if(sprout.parentNode)sprout.parentNode.removeChild(sprout);nodes=nodes.filter(function(n){return n!==sprout;});active=false;},1950);
     }
 
