@@ -26,6 +26,7 @@ jobs:
           # 03 still prefetches core.html. Keep a complete static compatibility
           # copy, without loading or executing the obsolete HTML generator.
           cp index.html _site/core.html
+          cp -r checks _site/
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
