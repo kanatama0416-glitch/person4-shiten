@@ -13,13 +13,20 @@
   try{
     let source=await(await fetch('./core.html',{cache:'no-store'})).text();
     source=source.replace('https://raw.githubusercontent.com/kanatama0416-glitch/person1-shiten/93246663e808f739feba769129b4593087c794cf/index.html','https://kanatama0416-glitch.github.io/person1-shiten/base.html');
+    source=source.replace('body{visibility:hidden}','body{visibility:visible}#p4Boot{position:fixed;inset:0;z-index:99999;background:#000;display:grid;place-items:center;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif}#p4Boot .boot-eye{width:92px;height:55px;border:4px solid #111;border-radius:50%;background:#fff;position:relative;overflow:hidden;transform:rotate(-3deg)}#p4Boot .boot-eye:after{content:"";position:absolute;width:28px;height:28px;border:3px solid #111;border-radius:50%;background:#70dc8b;left:29px;top:10px;box-shadow:inset -1px 0 0 #111}#p4Boot .boot-label{margin-top:18px;text-align:center;font:900 11px/1 Arial,sans-serif;letter-spacing:.22em}');
+    source=source.replace('<body><script>','<body><div id="p4Boot"><div><div class="boot-eye"></div><div class="boot-label">04 / SHITEN</div></div></div><script>');
+    source=source.replace(',1430,65);',',1430,120);')
+      .replace(',2040,125);',',2040,300);')
+      .replace('trunk.start+trunk.duration,62);','trunk.start+trunk.duration,120);')
+      .replaceAll(',forkTime,145);',',forkTime,320);')
+      .replaceAll(',820,true)',',2000,true)');
     const styleMarker="html=html.replace('<style>'";
     const timingPatch="html=html.replace('},1050);introEye.animate','},250);introEye.animate').replaceAll('duration:1650,delay:1250','duration:650,delay:250').replace('duration:1450,delay:1500','duration:600,delay:300').replace('},2980)','},1050)');";
     if(!source.includes(styleMarker))throw new Error('intro timing marker not found');
     source=source.replace(styleMarker,timingPatch+styleMarker);
     const pattern=/document\.open\(\);document\.write\(html\);document\.close\(\);?/;
     if(!pattern.test(source))throw new Error('patch marker not found');
-    const hook=`html=html.replace('</body>','<script>document.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest("#secretToggle,#tearToggle");if(b)window.scrollTo(0,0)},true);<\\/script><script src="https://kanatama0416-glitch.github.io/person1-shiten/eye-attract.js?v=20260916-stable"><\\/script><script src="https://kanatama0416-glitch.github.io/person1-shiten/tease-overrides.js?v=42d0b943"><\\/script><script src="https://kanatama0416-glitch.github.io/person1-shiten/eye-toggle-off.js?v=fb86c186"><\\/script></body>');`;
+    const hook=`html=html.replace('</body>','<script>document.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest("#secretToggle,#tearToggle");if(b)window.scrollTo(0,0)},true);<\\/script><script src="https://kanatama0416-glitch.github.io/person1-shiten/eye-attract.js?v=20260916-stable"><\\/script><script src="https://kanatama0416-glitch.github.io/person1-shiten/tease-overrides.js?v=42d0b943"><\\/script><script src="https://kanatama0416-glitch.github.io/person1-shiten/eye-toggle-off.js?v=fb86c186"><\\/script><script src="https://kanatama0416-glitch.github.io/person4-shiten/p4-stability.js?v=20260916-1"><\\/script></body>');`;
     source=source.replace(pattern,m=>hook+m);
     document.open();document.write(source);document.close();
   }catch(e){
