@@ -20,56 +20,54 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build static 04 page
         run: |
-          python -m pip install --disable-pip-version-check selenium
           curl -fsSL https://kanatama0416-glitch.github.io/person1-shiten/base.html -o base-build.html
-          python - <<'PY'
-          from pathlib import Path
-          s=Path('index.html').read_text(encoding='utf-8')
-          s=s.replace('https://kanatama0416-glitch.github.io/person1-shiten/base.html','./base-build.html')
-          Path('index-build.html').write_text(s,encoding='utf-8')
-          PY
-          python -m http.server 8765 >/tmp/p4-http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill $SERVER_PID || true' EXIT
-          python - <<'PY'
-          import time
-          from pathlib import Path
-          from selenium import webdriver
-          from selenium.webdriver.common.by import By
-          from selenium.webdriver.support.ui import WebDriverWait
+          node <<'NODE'
+          const fs=require('fs');
+          const shell=fs.readFileSync('index.html','utf8');
+          const core=fs.readFileSync('core.html','utf8');
+          const base=fs.readFileSync('base-build.html','utf8');
 
-          opts=webdriver.ChromeOptions()
-          for arg in ['--headless=new','--no-sandbox','--disable-dev-shm-usage','--window-size=390,844']:
-              opts.add_argument(arg)
-          d=webdriver.Chrome(options=opts)
-          d.set_page_load_timeout(30)
-          d.get('http://127.0.0.1:8765/index-build.html?prerender=1')
-          w=WebDriverWait(d,25)
-          w.until(lambda x: len(x.find_elements(By.CSS_SELECTOR,'main.page'))>0)
-          w.until(lambda x: len(x.find_elements(By.ID,'intro'))>0)
-          # Reset transient intro state so the deployed page starts exactly like the other pages.
-          d.execute_script('''
-            document.body.classList.add('intro-lock');
-            const intro=document.getElementById('intro');
-            const introEye=document.getElementById('introEye');
-            const brand=document.getElementById('introBrand');
-            const rays=document.getElementById('introRays');
-            const page=document.querySelector('main.page');
-            if(intro){ intro.removeAttribute('style'); intro.getAnimations().forEach(a=>a.cancel()); }
-            if(introEye){ introEye.removeAttribute('style'); introEye.getAnimations().forEach(a=>a.cancel()); }
-            if(page){ page.removeAttribute('style'); page.getAnimations().forEach(a=>a.cancel()); }
-            if(brand) brand.classList.remove('hide');
-            if(rays) rays.classList.remove('hide');
-          ''')
-          html=d.execute_script('return "<!doctype html>\n"+document.documentElement.outerHTML')
-          d.quit()
-          Path('rendered-index.html').write_text(html,encoding='utf-8')
-          assert 'p4Preboot' not in html
-          assert 'main class="page"' in html or 'main class="page ' in html
-          assert 'id="intro"' in html
-          PY
+          function scriptFrom(html){
+            const m=html.match(/<script>([\s\S]*?)<\/script>/i);
+            if(!m) throw new Error('script block not found');
+            return m[1];
+          }
+          let writes=[];
+          global.document={
+            body:{style:{},innerHTML:''},
+            open(){},
+            write(v){writes.push(String(v));},
+            close(){}
+          };
+          global.fetch=async (url)=>({
+            ok:true,
+            status:200,
+            text:async()=>String(url).includes('core.html')?core:base
+          });
+
+          (async()=>{
+            // Pass 1: run the lightweight 04 shell transformation at build time.
+            await eval(scriptFrom(shell));
+            if(!writes.length) throw new Error('shell produced no core html');
+            const preparedCore=writes.pop();
+
+            // Pass 2: run the core template transformation at build time.
+            writes=[];
+            await eval(scriptFrom(preparedCore));
+            if(!writes.length) throw new Error('core produced no final html');
+            let finalHtml=writes.pop();
+            if(!/^<!doctype/i.test(finalHtml.trim())) finalHtml='<!doctype html>\n'+finalHtml;
+
+            if(finalHtml.includes('p4Preboot')) throw new Error('custom 04 preboot leaked into final html');
+            if(finalHtml.includes("fetch('./core.html'")) throw new Error('runtime core fetch leaked into final html');
+            if(!finalHtml.includes('<main class="page">')) throw new Error('final page missing');
+            if(!finalHtml.includes('id="intro"')) throw new Error('standard intro missing');
+            if(!finalHtml.includes('id="p4Garden"')) throw new Error('04 garden missing');
+            fs.writeFileSync('rendered-index.html',finalHtml);
+          })().catch(e=>{console.error(e);process.exit(1)});
+          NODE
           mkdir -p _site
-          rsync -a --exclude '.git' --exclude '.github' --exclude '_site' --exclude 'index-build.html' --exclude 'base-build.html' --exclude 'rendered-index.html' ./ _site/
+          rsync -a --exclude '.git' --exclude '.github' --exclude '_site' --exclude 'base-build.html' --exclude 'rendered-index.html' ./ _site/
           cp rendered-index.html _site/index.html
           ! grep -q "fetch('./core.html'" _site/index.html
           ! grep -q 'p4Preboot' _site/index.html
