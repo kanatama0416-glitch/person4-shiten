@@ -22,6 +22,18 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           enablement: true
+      - name: Inject 04 interaction
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          marker = '<body>'
+          if marker not in s:
+              raise SystemExit('body not found')
+          s = s.replace(marker, marker + '<script src="./p4-interaction-v2.js"></script>', 1)
+          p.write_text(s, encoding='utf-8')
+          PY
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
