@@ -18,6 +18,61 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Build static 04 page
+        run: |
+          python -m pip install --disable-pip-version-check selenium
+          curl -fsSL https://kanatama0416-glitch.github.io/person1-shiten/base.html -o base-build.html
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf-8')
+          s=s.replace('https://kanatama0416-glitch.github.io/person1-shiten/base.html','./base-build.html')
+          Path('index-build.html').write_text(s,encoding='utf-8')
+          PY
+          python -m http.server 8765 >/tmp/p4-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          python - <<'PY'
+          import time
+          from pathlib import Path
+          from selenium import webdriver
+          from selenium.webdriver.common.by import By
+          from selenium.webdriver.support.ui import WebDriverWait
+
+          opts=webdriver.ChromeOptions()
+          for arg in ['--headless=new','--no-sandbox','--disable-dev-shm-usage','--window-size=390,844']:
+              opts.add_argument(arg)
+          d=webdriver.Chrome(options=opts)
+          d.set_page_load_timeout(30)
+          d.get('http://127.0.0.1:8765/index-build.html?prerender=1')
+          w=WebDriverWait(d,25)
+          w.until(lambda x: len(x.find_elements(By.CSS_SELECTOR,'main.page'))>0)
+          w.until(lambda x: len(x.find_elements(By.ID,'intro'))>0)
+          # Reset transient intro state so the deployed page starts exactly like the other pages.
+          d.execute_script('''
+            document.body.classList.add('intro-lock');
+            const intro=document.getElementById('intro');
+            const introEye=document.getElementById('introEye');
+            const brand=document.getElementById('introBrand');
+            const rays=document.getElementById('introRays');
+            const page=document.querySelector('main.page');
+            if(intro){ intro.removeAttribute('style'); intro.getAnimations().forEach(a=>a.cancel()); }
+            if(introEye){ introEye.removeAttribute('style'); introEye.getAnimations().forEach(a=>a.cancel()); }
+            if(page){ page.removeAttribute('style'); page.getAnimations().forEach(a=>a.cancel()); }
+            if(brand) brand.classList.remove('hide');
+            if(rays) rays.classList.remove('hide');
+          ''')
+          html=d.execute_script('return "<!doctype html>\n"+document.documentElement.outerHTML')
+          d.quit()
+          Path('rendered-index.html').write_text(html,encoding='utf-8')
+          assert 'p4Preboot' not in html
+          assert 'main class="page"' in html or 'main class="page ' in html
+          assert 'id="intro"' in html
+          PY
+          mkdir -p _site
+          rsync -a --exclude '.git' --exclude '.github' --exclude '_site' --exclude 'index-build.html' --exclude 'base-build.html' --exclude 'rendered-index.html' ./ _site/
+          cp rendered-index.html _site/index.html
+          ! grep -q "fetch('./core.html'" _site/index.html
+          ! grep -q 'p4Preboot' _site/index.html
       - name: Setup Pages
         uses: actions/configure-pages@v5
         with:
@@ -25,7 +80,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: './_site'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
