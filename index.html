@@ -62,6 +62,7 @@ const spots=[top+72,top+145,top+225,h*.34,h*.44,h*.54,h*.64,h*.74,h*.84];spots.f
 bud(18,top+118,4,0);bud(w-18,top+205,4,1);bud(22,h*.58,4,2);bud(w-20,h*.69,4,3);bud(19,h*.88,4,4);
 tendril('M 31 '+(top+255)+' q 24 10 6 27 q -17 14 -4 -6');tendril('M '+(w-31)+' '+(h*.48)+' q -24 10 -6 27 q 17 14 4 -6');tendril('M 33 '+(h*.76)+' q 25 9 7 28 q -17 13 -4 -7');
 const cards=[...page.querySelectorAll('.book')];cards.slice(0,-1).forEach((card,i)=>{const next=cards[i+1].getBoundingClientRect(),cr=card.getBoundingClientRect();flower(i%2?w-30:30,(cr.bottom+next.top)/2-pr.top,i)});
+flower(22,h-85,5);
 
 // Reveal each existing leaf/flower when the growing side vine reaches its attachment.
 svg.querySelectorAll('.p4-leaf-group,.p4-bud,.p4-flower,.p4-tendril,.p4-tendril-outline').forEach(el=>{
