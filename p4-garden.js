@@ -1,7 +1,7 @@
 // 04 garden geometry and appearance preserved from the static page.
 (()=>{
 const accent='#70dc8b',b=document.getElementById('tearToggle'),g=document.getElementById('p4Garden'),svg=document.getElementById('p4GardenSvg'),eye=document.querySelector('.hero .eye'),page=document.querySelector('main.page');if(!b||!g||!svg||!eye||!page)return;
-const NS='http://www.w3.org/2000/svg';let used=false,started=0,frame=0,segments=[],decorations=[],geometry;const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+const NS='http://www.w3.org/2000/svg';let used=false,started=0,frame=0,segments=[],decorations=[],geometry,lastStage='';const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 const E=(name,attrs={})=>{const el=document.createElementNS(NS,name);for(const[k,v]of Object.entries(attrs))el.setAttribute(k,v);return el};
 function leaf(x,y,rot,side,order,small){const g1=E('g',{class:'p4-leaf-group','data-order':order,transform:'translate('+x+' '+y+') rotate('+rot+')'+(side==='r'?' scale(-1 1)':'')});const sc=small?.82:1;const p=E('path',{d:'M '+(-15*sc)+' 0 C '+(-13*sc)+' '+(-10*sc)+' '+(4*sc)+' '+(-14*sc)+' '+(17*sc)+' '+(-2*sc)+' C '+(8*sc)+' '+(10*sc)+' '+(-6*sc)+' '+(11*sc)+' '+(-15*sc)+' 0 Z',class:'p4-leaf'});const vein=E('path',{d:'M '+(-10*sc)+' 1 Q 0 '+(-1*sc)+' '+(11*sc)+' '+(-1*sc),class:'p4-leaf-vein'});g1.append(p,vein);svg.appendChild(g1)}
 function bud(x,y,r,order){svg.appendChild(E('circle',{cx:x,cy:y,r:r,class:'p4-bud','data-order':order}))}
@@ -12,11 +12,19 @@ function shoot(d,start,speed,existing=false){
  const outline=E('path',{d,class:existing?'p4-vine-outline':'p4-growth-outline'}),line=E('path',{d,class:existing?'p4-vine':'p4-growth'});svg.append(outline,line);
  const length=line.getTotalLength(),duration=length/speed*1000;
  for(const p of [outline,line]){p.style.strokeDasharray=length+' '+length;p.style.strokeDashoffset=length;p.style.opacity='0'}
- const segment={outline,line,length,start,duration};segments.push(segment);return segment;
+ const segment={outline,line,length,start,duration,lastProgress:-1};segments.push(segment);return segment;
 }
 function atTime(segment,distance){return segment.start+distance/segment.length*segment.duration}
+// Sample each long side vine once. Decorations reuse these samples instead of repeatedly
+// asking the SVG engine for points every 5px for every leaf/flower.
+function sampleBranch(branch){
+ const step=Math.max(8,Math.min(24,branch.length/180)),samples=[];
+ for(let d=0;d<branch.length;d+=step){const p=branch.line.getPointAtLength(d);samples.push({d,y:p.y})}
+ const end=branch.line.getPointAtLength(branch.length);samples.push({d:branch.length,y:end.y});return samples;
+}
+function nearestDistance(samples,y){let distance=0,error=Infinity;for(const p of samples){const e=Math.abs(p.y-y);if(e<error){error=e;distance=p.d}}return distance}
 function build(){
- svg.replaceChildren();segments=[];decorations=[];
+ svg.replaceChildren();segments=[];decorations=[];lastStage='';
  const pr=page.getBoundingClientRect(),hr=page.querySelector('h1').getBoundingClientRect(),er=eye.getBoundingClientRect();
  const w=page.clientWidth,h=page.clientHeight,top=165,c=w/2,groundY=hr.bottom-pr.top+50;
  g.style.height=h+'px';svg.style.height=h+'px';
@@ -42,30 +50,29 @@ const cards=[...page.querySelectorAll('.book')];cards.slice(0,-1).forEach((card,
 flower(22,h-85,5);
 
 // Reveal each existing leaf/flower when the growing side vine reaches its attachment.
+const leftSamples=sampleBranch(left),rightSamples=sampleBranch(right);
 svg.querySelectorAll('.p4-leaf-group,.p4-bud,.p4-flower,.p4-tendril,.p4-tendril-outline').forEach(el=>{
  let x,y;const matrix=el.transform.baseVal.consolidate();
  if(matrix){x=matrix.matrix.e;y=matrix.matrix.f}else if(el.tagName==='circle'){x=+el.getAttribute('cx');y=+el.getAttribute('cy')}else{const point=el.getPointAtLength(0);x=point.x;y=point.y}
- const branch=x<c?left:right;let distance=0,error=Infinity;
- for(let d=0;d<=branch.length;d+=5){const p=branch.line.getPointAtLength(d),e=Math.abs(p.y-y);if(e<error){error=e;distance=d}}
- decorations.push({el,when:atTime(branch,distance),flower:el.classList.contains('p4-flower')});
+ const branch=x<c?left:right,samples=x<c?leftSamples:rightSamples,distance=nearestDistance(samples,y);
+ el.style.opacity='0';decorations.push({el,when:atTime(branch,distance),flower:el.classList.contains('p4-flower'),lastOpacity:-1});
 });
-geometry={ground,seed,cotyledons,groundY,c,sx:er.left+er.width/2-pr.left,sy:er.bottom-pr.top-5,end:Math.max(left.start+left.duration,right.start+right.duration)+600};
+geometry={ground,seed,cotyledons,groundY,c,sx:er.left+er.width/2-pr.left,sy:er.bottom-pr.top-5,end:Math.max(left.start+left.duration,right.start+right.duration)+600,w,h,lastGroundOpacity:-1,lastSeedOpacity:-1,lastSeedTransform:'',lastOpening:-1};
 if(used)paint(reduced.matches?geometry.end:performance.now()-started);
 }
 const clamp=x=>Math.max(0,Math.min(1,x));
 function paint(t){
  const {ground,seed,cotyledons,groundY,c,sx,sy}=geometry;
- ground.setAttribute('opacity',clamp(t/300));
- const fall=clamp((t-450)/800),buried=clamp((t-1250)/180);
- seed.setAttribute('opacity',t<450||t>=1430?0:1-buried);
- seed.setAttribute('transform','translate('+(sx+(c-sx)*fall)+' '+(sy+(groundY-sy)*fall*fall+buried*6)+') rotate('+(fall*35)+') scale('+(1-buried*.6)+')');
- const opening=clamp((t-1700)/450),ease=1-Math.pow(1-opening,3);cotyledons.setAttribute('opacity',opening>0?1:0);
- for(const leaf of cotyledons.children)leaf.setAttribute('transform','translate('+c+' '+(groundY-24)+') scale('+(Number(leaf.dataset.side)*ease)+' '+ease+')');
- for(const s of segments){const progress=clamp((t-s.start)/s.duration);for(const p of [s.outline,s.line]){p.style.opacity=progress>0?'1':'0';p.style.strokeDashoffset=String(s.length*(1-progress))}}
- for(const d of decorations){const progress=clamp((t-d.when-(d.flower?180:0))/360);d.el.style.opacity=String(progress)}
- g.dataset.stage=t<450?'ground':t<1430?'seed':t<2040?'sprout':t<segments[2].start?'upward':t<segments[3].start?'bend':t<segments[5].start?'fork':t<geometry.end?'downward':'complete';
+ const groundOpacity=clamp(t/300);if(groundOpacity!==geometry.lastGroundOpacity){ground.setAttribute('opacity',groundOpacity);geometry.lastGroundOpacity=groundOpacity}
+ const fall=clamp((t-450)/800),buried=clamp((t-1250)/180),seedOpacity=t<450||t>=1430?0:1-buried;
+ if(seedOpacity!==geometry.lastSeedOpacity){seed.setAttribute('opacity',seedOpacity);geometry.lastSeedOpacity=seedOpacity}
+ if(seedOpacity>0){const seedTransform='translate('+(sx+(c-sx)*fall)+' '+(sy+(groundY-sy)*fall*fall+buried*6)+') rotate('+(fall*35)+') scale('+(1-buried*.6)+')';if(seedTransform!==geometry.lastSeedTransform){seed.setAttribute('transform',seedTransform);geometry.lastSeedTransform=seedTransform}}
+ const opening=clamp((t-1700)/450);if(opening!==geometry.lastOpening){const ease=1-Math.pow(1-opening,3);cotyledons.setAttribute('opacity',opening>0?1:0);for(const leaf of cotyledons.children)leaf.setAttribute('transform','translate('+c+' '+(groundY-24)+') scale('+(Number(leaf.dataset.side)*ease)+' '+ease+')');geometry.lastOpening=opening}
+ for(const s of segments){const progress=clamp((t-s.start)/s.duration);if(progress===s.lastProgress)continue;for(const p of [s.outline,s.line]){p.style.opacity=progress>0?'1':'0';p.style.strokeDashoffset=String(s.length*(1-progress))}s.lastProgress=progress}
+ for(const d of decorations){const progress=clamp((t-d.when-(d.flower?180:0))/360);if(progress===d.lastOpacity)continue;d.el.style.opacity=String(progress);d.lastOpacity=progress}
+ const stage=t<450?'ground':t<1430?'seed':t<2040?'sprout':t<segments[2].start?'upward':t<segments[3].start?'bend':t<segments[5].start?'fork':t<geometry.end?'downward':'complete';if(stage!==lastStage){g.dataset.stage=stage;lastStage=stage}
 }
-function animate(now){if(!used||!geometry)return;paint(reduced.matches?geometry.end:now-started);if(!reduced.matches&&now-started<geometry.end)frame=requestAnimationFrame(animate);else{b.setAttribute('aria-label','植物を消す');g.dataset.stage='complete'}}
+function animate(now){if(!used||!geometry)return;paint(reduced.matches?geometry.end:now-started);if(!reduced.matches&&now-started<geometry.end)frame=requestAnimationFrame(animate);else{b.setAttribute('aria-label','植物を消す');g.dataset.stage='complete';lastStage='complete'}}
 // One owner for start, cancel, and resize: no disabled-button override.
 b.setAttribute('aria-pressed','false');
 g.dataset.stage='idle';
@@ -75,7 +82,7 @@ b.addEventListener('click',()=>{
  document.documentElement.scrollTop=0;document.body.scrollTop=0;
  if(used){
   used=false;cancelAnimationFrame(frame);cancelAnimationFrame(resizeFrame);
-  g.style.display='none';g.dataset.stage='idle';svg.replaceChildren();
+  g.style.display='none';g.dataset.stage='idle';lastStage='idle';svg.replaceChildren();
   segments=[];decorations=[];geometry=null;
   b.setAttribute('aria-pressed','false');b.setAttribute('aria-label','タネを落として植物を育てる');
   return;
@@ -83,7 +90,7 @@ b.addEventListener('click',()=>{
  // Reset every run, then measure only after the hidden SVG has been restored.
  cancelAnimationFrame(frame);cancelAnimationFrame(resizeFrame);
  geometry=null;segments=[];decorations=[];svg.replaceChildren();
- used=true;started=performance.now();g.style.display='';g.dataset.stage='starting';
+ used=true;started=performance.now();g.style.display='';g.dataset.stage='starting';lastStage='starting';
  b.setAttribute('aria-pressed','true');b.setAttribute('aria-label','植物を消す');
  frame=requestAnimationFrame(()=>{
   if(!used)return;
@@ -91,16 +98,18 @@ b.addEventListener('click',()=>{
  });
 });
 let resizeFrame=0;
-function rebuild(){
+function rebuild(force=false){
  if(!used)return;
  cancelAnimationFrame(resizeFrame);
  resizeFrame=requestAnimationFrame(()=>{
   if(!used)return;
+  const w=page.clientWidth,h=page.clientHeight;
+  if(!force&&geometry&&geometry.w===w&&geometry.h===h)return;
   build();cancelAnimationFrame(frame);frame=requestAnimationFrame(animate);
  });
 }
 // No SVG construction or path sampling until the visitor starts the garden.
-addEventListener('resize',rebuild);
-if('ResizeObserver' in window)new ResizeObserver(rebuild).observe(page);
-document.fonts?.ready.then(rebuild);
+addEventListener('resize',()=>rebuild(false));
+if('ResizeObserver' in window)new ResizeObserver(()=>rebuild(false)).observe(page);
+document.fonts?.ready.then(()=>rebuild(true));
 })();
