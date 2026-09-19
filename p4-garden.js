@@ -26,17 +26,21 @@ function nearestDistance(samples,y){let distance=0,error=Infinity;for(const p of
 function build(){
  svg.replaceChildren();segments=[];decorations=[];lastStage='';
  const pr=page.getBoundingClientRect(),hr=page.querySelector('h1').getBoundingClientRect(),er=eye.getBoundingClientRect();
- const w=page.clientWidth,h=page.clientHeight,top=165,c=w/2,groundY=hr.bottom-pr.top+50;
+ const rootBook=page.querySelector('.creator-spine--hamster'),rootRect=rootBook?.getBoundingClientRect();
+ const w=page.clientWidth,h=page.clientHeight,top=165,c=w/2;
+ const rootX=rootRect?rootRect.left-pr.left+rootRect.width/2:c;
+ const groundY=rootRect?rootRect.top-pr.top:hr.bottom-pr.top+50;
  g.style.height=h+'px';svg.style.height=h+'px';
  svg.setAttribute('viewBox','0 0 '+w+' '+h);svg.setAttribute('preserveAspectRatio','none');
- const ground=E('g',{'data-part':'ground',opacity:0});ground.append(E('path',{d:'M '+(c-39)+' '+groundY+' Q '+c+' '+(groundY-3)+' '+(c+39)+' '+groundY,class:'p4-ground'}),E('path',{d:'M '+(c-29)+' '+(groundY-3)+' l -3 -4 M '+(c+26)+' '+(groundY-2)+' l 4 -4',class:'p4-ground-grass'}));svg.append(ground);
+ const groundHalf=Math.max(24,Math.min(34,(rootRect?.width||68)/2-4));
+ const ground=E('g',{'data-part':'ground',opacity:0});ground.append(E('path',{d:'M '+(rootX-groundHalf)+' '+groundY+' Q '+rootX+' '+(groundY-2)+' '+(rootX+groundHalf)+' '+groundY,class:'p4-ground'}),E('path',{d:'M '+(rootX-groundHalf+8)+' '+(groundY-2)+' l -3 -4 M '+(rootX+groundHalf-10)+' '+(groundY-2)+' l 4 -4',class:'p4-ground-grass'}));svg.append(ground);
  const seed=E('ellipse',{cx:0,cy:0,rx:3.6,ry:5.2,class:'p4-seed',opacity:0});svg.append(seed);
- const stem=shoot('M '+c+' '+groundY+' Q '+(c-3)+' '+(groundY-13)+' '+c+' '+(groundY-24),1430,120);
+ const stem=shoot('M '+rootX+' '+groundY+' Q '+(rootX-3)+' '+(groundY-13)+' '+rootX+' '+(groundY-24),1430,120);
  const cotyledons=E('g',{'data-part':'cotyledons',opacity:0});
  // Both round leaves remain rooted at the tip of the same stem.
  for(const side of [-1,1]){const q=E('g');q.append(E('path',{d:'M 0 0 C -5 -15 -27 -17 -25 -5 C -23 6 -8 5 0 0 Z',class:'p4-cotyledon'}));q.dataset.side=side;cotyledons.append(q)}svg.append(cotyledons);
  const titleTop=hr.top-pr.top,titleBottom=hr.bottom-pr.top,rightX=Math.min(w-36,hr.right-pr.left+17),eyeBottom=er.bottom-pr.top;
- const trunk=shoot('M '+c+' '+(groundY-24)+' C '+(c+26)+' '+(groundY-50)+' '+rightX+' '+(groundY-25)+' '+rightX+' '+(titleBottom-20)+' C '+(rightX+9)+' '+(titleTop+35)+' '+(rightX+10)+' '+(titleTop-24)+' '+(c+85)+' '+(eyeBottom-5)+' C '+(c+57)+' '+(eyeBottom-9)+' '+(c-5)+' 64 '+c+' 18',2040,300);
+ const trunk=shoot('M '+rootX+' '+(groundY-24)+' C '+(rootX+26)+' '+(groundY-50)+' '+rightX+' '+(groundY-25)+' '+rightX+' '+(titleBottom-20)+' C '+(rightX+9)+' '+(titleTop+35)+' '+(rightX+10)+' '+(titleTop-24)+' '+(c+85)+' '+(eyeBottom-5)+' C '+(c+57)+' '+(eyeBottom-9)+' '+(c-5)+' 64 '+c+' 18',2040,300);
  // The tip hits the top, curls, and only then sends two curved shoots sideways.
  const bend=shoot('M '+c+' 18 C '+(c+1)+' 2 '+(c+18)+' 3 '+(c+17)+' 14 Q '+(c+17)+' 22 '+(c+10)+' 23',trunk.start+trunk.duration,120);
  const forkTime=bend.start+bend.duration;
@@ -57,17 +61,17 @@ svg.querySelectorAll('.p4-leaf-group,.p4-bud,.p4-flower,.p4-tendril,.p4-tendril-
  const branch=x<c?left:right,samples=x<c?leftSamples:rightSamples,distance=nearestDistance(samples,y);
  el.style.opacity='0';decorations.push({el,when:atTime(branch,distance),flower:el.classList.contains('p4-flower'),lastOpacity:-1});
 });
-geometry={ground,seed,cotyledons,groundY,c,sx:er.left+er.width/2-pr.left,sy:er.bottom-pr.top-5,end:Math.max(left.start+left.duration,right.start+right.duration)+600,w,h,lastGroundOpacity:-1,lastSeedOpacity:-1,lastSeedTransform:'',lastOpening:-1};
+geometry={ground,seed,cotyledons,groundY,c,rootX,sx:er.left+er.width/2-pr.left,sy:er.bottom-pr.top-5,end:Math.max(left.start+left.duration,right.start+right.duration)+600,w,h,lastGroundOpacity:-1,lastSeedOpacity:-1,lastSeedTransform:'',lastOpening:-1};
 if(used)paint(reduced.matches?geometry.end:performance.now()-started);
 }
 const clamp=x=>Math.max(0,Math.min(1,x));
 function paint(t){
- const {ground,seed,cotyledons,groundY,c,sx,sy}=geometry;
+ const {ground,seed,cotyledons,groundY,rootX,sx,sy}=geometry;
  const groundOpacity=clamp(t/300);if(groundOpacity!==geometry.lastGroundOpacity){ground.setAttribute('opacity',groundOpacity);geometry.lastGroundOpacity=groundOpacity}
  const fall=clamp((t-450)/800),buried=clamp((t-1250)/180),seedOpacity=t<450||t>=1430?0:1-buried;
  if(seedOpacity!==geometry.lastSeedOpacity){seed.setAttribute('opacity',seedOpacity);geometry.lastSeedOpacity=seedOpacity}
- if(seedOpacity>0){const seedTransform='translate('+(sx+(c-sx)*fall)+' '+(sy+(groundY-sy)*fall*fall+buried*6)+') rotate('+(fall*35)+') scale('+(1-buried*.6)+')';if(seedTransform!==geometry.lastSeedTransform){seed.setAttribute('transform',seedTransform);geometry.lastSeedTransform=seedTransform}}
- const opening=clamp((t-1700)/450);if(opening!==geometry.lastOpening){const ease=1-Math.pow(1-opening,3);cotyledons.setAttribute('opacity',opening>0?1:0);for(const leaf of cotyledons.children)leaf.setAttribute('transform','translate('+c+' '+(groundY-24)+') scale('+(Number(leaf.dataset.side)*ease)+' '+ease+')');geometry.lastOpening=opening}
+ if(seedOpacity>0){const seedTransform='translate('+(sx+(rootX-sx)*fall)+' '+(sy+(groundY-sy)*fall*fall+buried*6)+') rotate('+(fall*35)+') scale('+(1-buried*.6)+')';if(seedTransform!==geometry.lastSeedTransform){seed.setAttribute('transform',seedTransform);geometry.lastSeedTransform=seedTransform}}
+ const opening=clamp((t-1700)/450);if(opening!==geometry.lastOpening){const ease=1-Math.pow(1-opening,3);cotyledons.setAttribute('opacity',opening>0?1:0);for(const leaf of cotyledons.children)leaf.setAttribute('transform','translate('+rootX+' '+(groundY-24)+') scale('+(Number(leaf.dataset.side)*ease)+' '+ease+')');geometry.lastOpening=opening}
  for(const s of segments){const progress=clamp((t-s.start)/s.duration);if(progress===s.lastProgress)continue;for(const p of [s.outline,s.line]){p.style.opacity=progress>0?'1':'0';p.style.strokeDashoffset=String(s.length*(1-progress))}s.lastProgress=progress}
  for(const d of decorations){const progress=clamp((t-d.when-(d.flower?180:0))/360);if(progress===d.lastOpacity)continue;d.el.style.opacity=String(progress);d.lastOpacity=progress}
  const stage=t<450?'ground':t<1430?'seed':t<2040?'sprout':t<segments[2].start?'upward':t<segments[3].start?'bend':t<segments[5].start?'fork':t<geometry.end?'downward':'complete';if(stage!==lastStage){g.dataset.stage=stage;lastStage=stage}
