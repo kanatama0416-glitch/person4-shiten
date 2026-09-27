@@ -1,0 +1,44 @@
+name: Fetch person 04 cover assets
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fetch-cover-assets.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download high-resolution book covers into repository
+        run: |
+          set -euxo pipefail
+          mkdir -p book-covers
+          curl -fL --retry 3 --connect-timeout 20 -A "Mozilla/5.0" "https://baseec-img-mng.akamaized.net/images/item/origin/bc034b53c3ddc82aebf817031dcee2d1.jpg?im=Resize%2Cwidth%3D1280%2Ctype%3Dnormal&imformat=generic&q=90" -o book-covers/book_cover_37.jpg
+          curl -fL --retry 3 --connect-timeout 20 -A "Mozilla/5.0" "https://store.gasbook.tokyo/cdn/shop/files/yuniworks_face-min_9e3eeea4-c1ba-481d-a078-226ec2251278.jpg?v=1703466837" -o book-covers/book_cover_38.jpg
+          curl -fL --retry 3 --connect-timeout 20 -A "Mozilla/5.0" "https://makeshop-multi-images.akamaized.net/kyuryudo/itemimages/0000000015372_qCvlzLG.jpg" -o book-covers/book_cover_39.jpg
+          curl -fL --retry 3 --connect-timeout 20 -A "Mozilla/5.0" "https://prcdn.freetls.fastly.net/release_image/9728/2406/9728-2406-41660299974d4d3c2961f1a36d12cc5f-1080x1350.png" -o book-covers/book_cover_40.png
+          test "$(stat -c%s book-covers/book_cover_37.jpg)" -gt 500000
+          test "$(stat -c%s book-covers/book_cover_38.jpg)" -gt 100000
+          test "$(stat -c%s book-covers/book_cover_39.jpg)" -gt 50000
+          test "$(stat -c%s book-covers/book_cover_40.png)" -gt 1000000
+
+      - name: Commit downloaded covers
+        run: |
+          set -euxo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add book-covers/book_cover_37.jpg book-covers/book_cover_38.jpg book-covers/book_cover_39.jpg book-covers/book_cover_40.png
+          if git diff --cached --quiet; then
+            echo "No cover changes to commit."
+            exit 0
+          fi
+          git commit -m "Store high-resolution person 04 book covers"
+          git push origin HEAD:main
