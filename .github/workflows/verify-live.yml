@@ -1,5 +1,5 @@
 name: Verify live person 04 page
-# verification revision 2
+# verification revision 4
 
 on:
   push:
@@ -79,7 +79,7 @@ jobs:
                   info["covers"].append(data)
                   driver.execute_script("arguments[0].scrollIntoView({block:'center'});", el)
                   time.sleep(.7)
-                  el.screenshot(str(out / f"cover-{i}.png"))
+                  el.find_element(By.XPATH, "..").screenshot(str(out / f"cover-{i}.png"))
 
               (out/"info.json").write_text(json.dumps(info, ensure_ascii=False, indent=2), encoding="utf-8")
               (out/"page.html").write_text(driver.page_source, encoding="utf-8")
