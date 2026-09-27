@@ -1,0 +1,95 @@
+name: Verify live person 04 page
+
+on:
+  push:
+    paths:
+      - '.github/workflows/verify-live.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Selenium
+        run: python -m pip install --disable-pip-version-check selenium
+
+      - name: Capture live GitHub Pages
+        env:
+          VERIFY_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import json, os, time
+          from pathlib import Path
+          from selenium import webdriver
+          from selenium.webdriver.chrome.options import Options
+          from selenium.webdriver.common.by import By
+
+          out = Path("live-verify")
+          out.mkdir(exist_ok=True)
+
+          opts = Options()
+          opts.add_argument("--headless=new")
+          opts.add_argument("--no-sandbox")
+          opts.add_argument("--disable-dev-shm-usage")
+          opts.add_argument("--window-size=390,844")
+          opts.add_argument("--force-device-scale-factor=1")
+
+          driver = webdriver.Chrome(options=opts)
+          try:
+              url = "https://kanatama0416-glitch.github.io/person4-shiten/?verify=" + os.environ["VERIFY_SHA"]
+              driver.get(url)
+              for _ in range(40):
+                  if driver.execute_script("return document.readyState") == "complete":
+                      break
+                  time.sleep(.25)
+              time.sleep(4)
+
+              info = {
+                  "url": driver.current_url,
+                  "title": driver.title,
+                  "viewport": driver.execute_script("return {w:innerWidth,h:innerHeight,dpr:devicePixelRatio}"),
+                  "covers": []
+              }
+
+              covers = driver.find_elements(By.CSS_SELECTOR, ".book-cover-photo")
+              info["cover_count"] = len(covers)
+
+              for i, el in enumerate(covers, 1):
+                  data = driver.execute_script("""
+                    const e=arguments[0], r=e.getBoundingClientRect();
+                    return {
+                      src:e.currentSrc || e.src,
+                      naturalWidth:e.naturalWidth,
+                      naturalHeight:e.naturalHeight,
+                      complete:e.complete,
+                      clientWidth:e.clientWidth,
+                      clientHeight:e.clientHeight,
+                      display:getComputedStyle(e).display,
+                      visibility:getComputedStyle(e).visibility,
+                      opacity:getComputedStyle(e).opacity,
+                      rect:{x:r.x,y:r.y,width:r.width,height:r.height}
+                    }
+                  """, el)
+                  info["covers"].append(data)
+                  driver.execute_script("arguments[0].scrollIntoView({block:'center'});", el)
+                  time.sleep(.7)
+                  el.screenshot(str(out / f"cover-{i}.png"))
+
+              (out/"info.json").write_text(json.dumps(info, ensure_ascii=False, indent=2), encoding="utf-8")
+              (out/"page.html").write_text(driver.page_source, encoding="utf-8")
+              driver.save_screenshot(str(out/"viewport-last.png"))
+              print(json.dumps(info, ensure_ascii=False, indent=2))
+          finally:
+              driver.quit()
+          PY
+
+      - name: Upload verification artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-page-verification
+          path: live-verify
