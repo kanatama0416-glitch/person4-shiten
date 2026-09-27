@@ -1,0 +1,52 @@
+name: Crop person 04 book covers
+
+on:
+  push:
+    paths:
+      - '.github/workflows/crop-cover-assets.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  crop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Pillow
+        run: python -m pip install --disable-pip-version-check pillow
+
+      - name: Crop local high-resolution sources
+        run: |
+          python - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+
+          jobs = [
+              ("book-covers/book_cover_37.jpg", "book-covers/p4-cover-kusamatrix.jpg", (220, 65, 1025, 1190)),
+              ("book-covers/book_cover_38.jpg", "book-covers/p4-cover-yuni.jpg", (288, 170, 975, 1080)),
+              ("book-covers/book_cover_39.jpg", "book-covers/p4-cover-komatsu.jpg", (0, 0, 400, 530)),
+              ("book-covers/book_cover_40.png", "book-covers/p4-cover-kiyokawa.jpg", (135, 160, 945, 1220)),
+          ]
+          for src, dst, box in jobs:
+              im = Image.open(src).convert("RGB")
+              crop = im.crop(box)
+              crop.save(dst, quality=94, optimize=True, progressive=True)
+              print(dst, crop.size, Path(dst).stat().st_size)
+          PY
+
+      - name: Commit cropped covers
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add book-covers/p4-cover-*.jpg
+          if git diff --cached --quiet; then
+            echo "No crop changes."
+            exit 0
+          fi
+          git commit -m "Add cropped person 04 book cover assets"
+          git push origin HEAD:main
