@@ -27,6 +27,17 @@ jobs:
           # copy, without loading or executing the obsolete HTML generator.
           cp index.html _site/core.html
           cp -r checks _site/
+          # Match person 02: publish the local book-cover directory with the page.
+          cp -r book-covers _site/
+          # Replace the small fallback files in the deploy artifact with high-resolution originals.
+          curl -fL --retry 3 --connect-timeout 20 -A "Mozilla/5.0" "https://baseec-img-mng.akamaized.net/images/item/origin/bc034b53c3ddc82aebf817031dcee2d1.jpg?im=Resize%2Cwidth%3D1280%2Ctype%3Dnormal&imformat=generic&q=90" -o _site/book-covers/book_cover_37.jpg
+          curl -fL --retry 3 --connect-timeout 20 -A "Mozilla/5.0" "https://store.gasbook.tokyo/cdn/shop/files/yuniworks_face-min_9e3eeea4-c1ba-481d-a078-226ec2251278.jpg?v=1703466837" -o _site/book-covers/book_cover_38.jpg
+          curl -fL --retry 3 --connect-timeout 20 -A "Mozilla/5.0" "https://makeshop-multi-images.akamaized.net/kyuryudo/itemimages/0000000015372_qCvlzLG.jpg" -o _site/book-covers/book_cover_39.jpg
+          curl -fL --retry 3 --connect-timeout 20 -A "Mozilla/5.0" "https://prcdn.freetls.fastly.net/release_image/9728/2406/9728-2406-41660299974d4d3c2961f1a36d12cc5f-1080x1350.png" -o _site/book-covers/book_cover_40.png
+          test "$(stat -c%s _site/book-covers/book_cover_37.jpg)" -gt 50000
+          test "$(stat -c%s _site/book-covers/book_cover_38.jpg)" -gt 50000
+          test "$(stat -c%s _site/book-covers/book_cover_39.jpg)" -gt 30000
+          test "$(stat -c%s _site/book-covers/book_cover_40.png)" -gt 50000
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
